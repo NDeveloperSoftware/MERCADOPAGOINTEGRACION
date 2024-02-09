@@ -28,8 +28,8 @@ Mercado_Pago.post("/", async (req, res) => {
       items: items,
 
       back_urls: {
-        success: "http://www.backendpruebamercadopago.vercel.app/checkout",
-        failure: "http://backendpruebamercadopago.vercel.app/fail",
+        success: "http://localhost:3000/checkout",
+        failure: "http://localhost:3000/checkout",
         notification: "http://tuapp.com/notificaciones" // Ruta para recibir notificaciones
       },
 
