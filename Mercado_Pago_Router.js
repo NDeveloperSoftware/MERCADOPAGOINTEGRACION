@@ -1,9 +1,11 @@
+// Mercado_Pago_Router.js
 
-const { Router } = require("express");
+const express = require("express");
 const mercadopago = require("mercadopago");
-const dotenv = require("dotenv");
-dotenv.config();
-const Mercado_Pago = Router();
+const { db } = require("./firebaseConfig"); // Importa la instancia de Firestore
+const { collection, addDoc } = require("firebase/firestore");
+
+const Mercado_Pago = express.Router();
 
 mercadopago.configure({
   access_token: process.env.ACCESS_TOKE || "",
@@ -28,6 +30,7 @@ Mercado_Pago.post("/", async (req, res) => {
       back_urls: {
         success: "http://www.backendpruebamercadopago.vercel.app/checkout",
         failure: "http://backendpruebamercadopago.vercel.app/fail",
+        notification: "http://tuapp.com/notificaciones" // Ruta para recibir notificaciones
       },
 
       auto_return: "approved",
@@ -39,6 +42,41 @@ Mercado_Pago.post("/", async (req, res) => {
   } catch (error) {
     console.error(error.message);
     res.status(500).json(error.message);
+  }
+});
+
+// Agrega una nueva ruta para manejar las notificaciones de Mercado Pago
+Mercado_Pago.post("/notificaciones", async (req, res) => {
+  const paymentId = req.body.data.id;
+  
+  try {
+    // Utiliza el ID de pago para obtener los detalles de la transacción desde Mercado Pago
+    const payment = await mercadopago.payment.get(paymentId);
+    
+    // Almacena la información en Firestore
+    const pedidoRef = collection(db, "pedidos");
+
+    const pedido = {
+      payment_id: paymentId,
+      monto: payment.transaction_amount,
+      estado: payment.status,
+      productos: payment.items.map(item => ({
+        titulo: item.title,
+        precio: item.unit_price,
+        cantidad: item.quantity
+      })),
+      fecha: payment.date_approved // O cualquier campo de fecha relevante
+    };
+
+    // Guarda el pedido en Firestore
+    await addDoc(pedidoRef, pedido);
+
+    console.log("Pedido registrado en Firestore:", pedido);
+    
+    res.sendStatus(200);
+  } catch (error) {
+    console.error("Error al procesar la notificación de pago:", error);
+    res.sendStatus(500);
   }
 });
 
