@@ -9,6 +9,9 @@ const Mercado_Pago = express.Router();
 
 mercadopago.configure({
   access_token: process.env.ACCESS_TOKEN || "",
+  client_id: process.env.MP_CLIENT_ID || "",
+  client_secret: process.env.MP_CLIENT_SECRET || ""
+
 });
 
 Mercado_Pago.post("/", async (req, res) => {
@@ -64,7 +67,7 @@ Mercado_Pago.post("/notify", async (req, res) => {
         precio: item.unit_price,
         cantidad: item.quantity
       })),
-      fecha: payment.date_approved // O cualquier campo de fecha relevante
+      fecha: payment.date_approved 
     };
 
     // Guarda el pedido en Firestore
