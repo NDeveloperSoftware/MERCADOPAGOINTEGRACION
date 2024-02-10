@@ -8,14 +8,13 @@ const { collection, addDoc } = require("firebase/firestore");
 const Mercado_Pago = express.Router();
 
 mercadopago.configure({
-  access_token: process.env.ACCESS_TOKE || "",
-  client_id: process.env.MP_CLIENT_ID || "",
-  client_secret: process.env.MP_CLIENT_SECRET || ""
+  access_token: process.env.ACCESS_TOKEN || "",
 });
 
 Mercado_Pago.post("/", async (req, res) => {
   const carrito = req.body;
 
+  const URL = "https://mercadopagointegracion-dev-nrhk.3.us-1.fl0.io";
   try {
     const items = carrito.map(producto => ({
       title: producto.titulo,
@@ -27,13 +26,13 @@ Mercado_Pago.post("/", async (req, res) => {
     const preference = {
       items: items,
 
-      back_urls: {
-        success: "http://localhost:3000/checkout",
-        failure: "http://localhost:3000/checkout",
-        notification: "http://tuapp.com/notificaciones" // Ruta para recibir notificaciones
-      },
-
       auto_return: "approved",
+
+      back_urls: {
+        success: `${URL}`,
+        failure: `${URL}`,
+      },
+      notification_url:`${URL}/notify`,
     };
 
     const respuesta = await mercadopago.preferences.create(preference);
@@ -46,7 +45,7 @@ Mercado_Pago.post("/", async (req, res) => {
 });
 
 // Agrega una nueva ruta para manejar las notificaciones de Mercado Pago
-Mercado_Pago.post("/notificaciones", async (req, res) => {
+Mercado_Pago.post("/notify", async (req, res) => {
   const paymentId = req.body.data.id;
   
   try {
